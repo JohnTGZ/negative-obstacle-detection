@@ -1,0 +1,17 @@
+scan_filter_chain:
+
+#removes points outside of the specified bounds
+- name: angular_bounds
+  type: laser_filters/LaserScanAngularBoundsFilter
+  params:
+    lower_angle: -0.9599311 #40(0.785398163), 45(0.785398163), 50 (0.872664626), 55(0.9599311) 70 (1.221730476), 75 (1.308996939), 80 (1.3962)
+    upper_angle: 0.9599311
+
+- name: range_filter
+  type: laser_filters/LaserScanRangeFilter
+  params:
+    use_message_range_limits: false   # if not specified defaults to false
+    lower_threshold: 0.05              # if not specified defaults to 0.0
+    upper_threshold: 10.0             # if not specified defaults to 100000.0
+    lower_replacement_value: -.inf    # if not specified defaults to NaN
+    upper_replacement_value: .inf     # if not specified defaults to NaN

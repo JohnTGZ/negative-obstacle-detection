@@ -1,0 +1,36 @@
+####################
+#Physical parameters
+####################
+#[meters] Height from base_link
+lidar_height: 0.95 #1.0
+#[degrees] Lidar pitch (about y axis of base link)
+lidar_pitch: 30.0 #30.0
+#[degrees] Lidar resolution (about y axis of base link)
+lidar_resolution: 1.0
+
+################
+#Failsafe params
+################
+#[bool] whether to turn on failsafe. This will issue a /cmd_vel command that stops the robot
+# should more than a user-specified percentage of the lidar be obstructed.
+failsafe: false
+#[meters] ranges less than this distance is considered as an obstructed ray
+failsafe_threshold_dist: 0.2
+#[percentage] if the percentage of ranges with value less than 
+#"failsafe_threshold_dist" is exceeded, then lidar is obstructed.
+failsafe_threshold_percentage: 0.4
+#[seconds] Time out from when the lidar is obstructed 
+# before failsafe is activated
+failsafe_timeout: 2.0
+
+######################
+#Cliff detector params
+######################
+#[meters] Distance along the ray below the ground plane to detect as a cliff area
+cliff_threshold_constant: 0.20 
+
+##############
+#Segmentation
+##############
+# Minimum points required to comprise a segment of cliff points
+min_cliff_pts_in_seg: 3

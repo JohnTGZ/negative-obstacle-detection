@@ -1,0 +1,24 @@
+<launch>
+  
+  <arg name="cliff_cloud_topic" default="scan_cliff_cloud"/>
+  <arg name="cliff_scan_topic_raw" default="scan_cliff_raw"/>
+  <arg name="cliff_scan_topic_filtered" default="scan_cliff_filtered"/>
+  <arg name="cliff_scan_topic_output" default="scan_cliff"/>
+  <arg name="cliff_frame_id" default="cliff_lidar"/>
+
+  <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="scan_cliff_filter" output="screen" >
+    <remap from="scan" to="$(arg cliff_scan_topic_raw)" />
+    <remap from="scan_filtered" to="$(arg cliff_scan_topic_filtered)" />
+    <rosparam command="load" file="$(find cliff_detector)/config/scan_cliff_filter.yaml" />
+  </node>
+
+  <!-- 2: Cliff detection node-->
+  <node pkg="cliff_detector" type="cliff_detector_node" name="cliff_detector" output="screen" >
+    <remap from="scan" to="$(arg cliff_scan_topic_filtered)" />
+    <remap from="scan_out" to="$(arg cliff_scan_topic_output)" />
+    <rosparam command="load" file="$(find cliff_detector)/config/cliff_detector_params.yaml" />
+  </node>
+
+
+</launch>
+

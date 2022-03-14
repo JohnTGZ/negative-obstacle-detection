@@ -1,0 +1,70 @@
+<launch>
+
+  <!-- This practical example uses the Sick Tim 240 to demonstrate negative obstacle detection -->
+
+  <arg name="hostname" default="192.168.1.230"/>
+  <arg name="port" default="2111"/>
+  <arg name="cliff_scan_topic_uncorrected" default="scan_cliff_unused"/>
+  <arg name="cliff_cloud_topic" default="scan_cliff_cloud"/>
+  <arg name="cliff_scan_topic_raw" default="scan_cliff_raw"/>
+  <arg name="cliff_scan_topic_filtered" default="scan_cliff_filtered"/>
+  <arg name="cliff_scan_topic_output" default="scan_cliff"/>
+  <arg name="cliff_frame_id" default="cliff_lidar"/>
+
+  <!-- SICK TIM DRIVER -->
+  <node name="sick_tim_240" pkg="sick_scan" type="sick_generic_caller" respawn="true" output="screen">
+      <param name="scanner_type" type="string" value="sick_tim_240"/>
+      <!-- datagram shows values from -90 ... 120 (211 values) -->
+      <!-- -120° -->
+      <param name="min_ang" type="double" value="-2.094395102"/>
+      <!-- 120° -->
+      <param name="max_ang" type="double" value="+2.094395102"/>
+      <!-- corresponds to 1.0/(14.4 * 360) -->
+      <param name="time_increment" type="double" value="0.00019290123"/>
+      <param name="use_binary_protocol" type="bool" value="false"/>
+      <param name="intensity" type="bool" value="true"/>
+      <param name="intensity_resolution_16bit" type="bool" value="true"/>
+      <param name="hostname" type="string" value="$(arg hostname)"/>
+      <param name="scan_topic" type="string" value="$(arg cliff_scan_topic_uncorrected)"/>
+      <param name="cloud_topic" type="string" value="$(arg cliff_cloud_topic)"/>
+      <param name="frame_id" type="str" value="$(arg cliff_frame_id)"/>
+      <param name="port" type="string" value="$(arg port)"/>
+      <param name="timelimit" type="int" value="5"/>
+      <param name="sw_pll_only_publish" type="bool" value="true"/>
+  </node>
+
+  <!-- Convert point clouds into laser scans -->
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="cliff_pointcloud_to_laserscan">
+    <remap from="cloud_in" to="/$(arg cliff_cloud_topic)"/>
+    <remap from="scan" to="$(arg cliff_scan_topic_raw)"/>
+    <param name="min_height" value="-10.0"/>
+    <param name="max_height" value="10.0"/>
+    <param name="angle_min" value="-2.094395102"/>
+    <param name="angle_max" value="2.094395102"/>
+    <param name="angle_increment" value="0.01745329"/>
+    <param name="range_min" value="0.05"/>
+    <param name="range_max" value="10.0"/>
+    <param name="scan_time" value="0.01"/>
+    <param name="use_inf" value="true"/>
+    <param name="concurrency_level" value="1"/>
+    <param name="target_frame" value="$(arg cliff_frame_id)"/>
+  </node>
+
+  <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="scan_cliff_filter" output="screen" >
+    <remap from="scan" to="$(arg cliff_scan_topic_raw)" />
+    <remap from="scan_filtered" to="$(arg cliff_scan_topic_filtered)" />
+    <rosparam command="load" file="$(find cliff_detector)/config/scan_cliff_filter.yaml" />
+  </node>
+
+  <!-- 2: Cliff detection node-->
+  <node pkg="cliff_detector" type="cliff_detector_node" name="cliff_detector" output="screen" >
+    <remap from="scan" to="$(arg cliff_scan_topic_filtered)" />
+    <remap from="scan_out" to="$(arg cliff_scan_topic_output)" />
+    <rosparam command="load" file="$(find cliff_detector)/config/cliff_detector_params.yaml" />
+  </node>
+
+  <!-- Lidar tiled down at 30 degrees (yaw) -->
+  <node pkg="tf" type="static_transform_publisher" name="fp_to_lidar_tf" args="0.0 0.0 1.0 0  0.258819  0   0.9659   base_footprint cliff_lidar 100" />
+
+</launch>
+
